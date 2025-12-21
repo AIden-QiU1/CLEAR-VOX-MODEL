@@ -1,5 +1,4 @@
-CLEAR-VOX-MODEL
-ClearVox: Accessible ASR for Chinese Dysarthric Speech
+#ClearVox-Model: Accessible ASR for Chinese Dysarthric Speech
 
 CLEAR-VOX-MODEL 是一个面向 中文构音障碍（Dysarthria） 场景的语音识别研究与工程项目，基于 阿里 FunASR / FunASR-Nano，通过阶段化训练策略，逐步构建 高可用、可扩展的无障碍语音识别系统。
 
