@@ -1,7 +1,7 @@
 #!/bin/bash
 # FunASR Paraformer 构音障碍微调脚本 v2.3 (显存优化版)
 # 策略: 增强 SpecAugment
-# 显存优化: batch_type=example, batch_size=32 (适合 24GB GPU)
+# 显存优化: batch_type=example, batch_size=24 (适合 24GB GPU)
 # 作者: CLEAR-VOX Team
 # 日期: 2025-12-23
 
@@ -28,7 +28,7 @@ echo "  1. 增强 SpecAugment (频率/时间遮蔽)"
 echo ""
 echo "显存优化:"
 echo "  - batch_type: example (按样本数计数)"
-echo "  - batch_size: 32 (适合 24GB GPU)"
+echo "  - batch_size: 24 (适合 24GB GPU)"
 echo ""
 echo "模型保存策略:"
 echo "  - 保留效果最好的 5 个模型"
@@ -50,7 +50,7 @@ torchrun --nproc_per_node=1 ${workspace}/funasr/bin/train_ds.py \
     ++dataset_conf.index_ds="IndexDSJsonl" \
     ++dataset_conf.data_split_num=1 \
     ++dataset_conf.batch_sampler="BatchSampler" \
-    ++dataset_conf.batch_size=32 \
+    ++dataset_conf.batch_size=24 \
     ++dataset_conf.sort_size=1024 \
     ++dataset_conf.batch_type="example" \
     ++dataset_conf.num_workers=2 \
