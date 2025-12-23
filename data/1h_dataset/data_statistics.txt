@@ -1,0 +1,19 @@
+============================================================
+1h Dataset Statistics
+============================================================
+
+Train Set:
+  Speakers: 35
+  Utterances: 45327
+
+Validation Set:
+  Speakers: 4
+  Utterances: 4460
+
+Test Set:
+  Speakers: 5
+  Utterances: 6064
+
+Total:
+  Speakers: 44
+  Utterances: 55851

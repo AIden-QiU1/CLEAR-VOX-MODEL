@@ -1,226 +1,294 @@
-#ClearVox-Model: Accessible ASR for Chinese Dysarthric Speech
+# �� CLEAR-VOX-MODEL: 构音障碍语音识别系统
 
-CLEAR-VOX-MODEL 是一个面向 中文构音障碍（Dysarthria） 场景的语音识别研究与工程项目，基于 阿里 FunASR / FunASR-Nano，通过阶段化训练策略，逐步构建 高可用、可扩展的无障碍语音识别系统。
+> **CLEAR-VOX** (CLear spEech for All: Recognition Voice OXygen)  
+> 面向中文构音障碍（Dysarthria）场景的语音识别研究与工程项目
 
-1. 项目目标
+[![FunASR](https://img.shields.io/badge/FunASR-1.2.9-blue)](https://github.com/modelscope/FunASR)
+[![Python](https://img.shields.io/badge/Python-3.10+-green)](https://python.org)
+[![License](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey)](LICENSE)
 
-🎯 提升构音障碍语音的 自动语音识别（ASR）准确率
+---
 
-🎯 支持 CDSD / MDSC 等障碍语音数据集
+## 📊 项目概览
 
-🎯 采用 轻量模型（FunASR-Nano）→ 高性能模型 的渐进式路线
+### 核心目标
+- 🎯 提升构音障碍语音的 ASR 准确率 (目标 CER < 20%)
+- 🎯 支持 CDSD (Chinese Dysarthria Speech Database) 数据集
+- 🎯 采用 Paraformer-large → 流式优化 的渐进式路线
+- 🎯 构建 ASR + Agent + TTS 无障碍交互系统
+- 🎯 支持单卡 RTX 3090/4090 本地训练
 
-🎯 可扩展到 ASR + GER（二阶段纠错） 架构
+### 当前进度
 
-🎯 支持 单卡 RTX 3090 / 4090 本地训练
+| 阶段 | 任务 | 状态 | 说明 |
+|------|------|------|------|
+| 数据准备 | 1h 数据集处理 | ✅ 完成 | 55,851 条语音 |
+| 环境配置 | FunASR 安装 | ✅ 完成 | NumPy 1.26.4 |
+| 基线测试 | 原始模型 CER | ✅ 完成 | **82.50%** (3400样本) |
+| 模型微调 | Paraformer 微调 | ⏳ 待执行 | 脚本已就绪 |
+| Agent 集成 | LLM 对话 | 🔜 计划中 | - |
+| TTS 集成 | 语音合成 | 🔜 计划中 | - |
 
-2. 推荐目录结构（CLEAR-VOX-MODEL）
+---
+
+## 🔬 技术架构
+
+### 三阶段开发路线图
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              第一阶段：低资源基础版 (当前)                         │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+│  │  ASR        │────▶│  Agent      │────▶│  TTS        │       │
+│  │  Paraformer │     │  LLM API    │     │  VITS/GPT   │       │
+│  │  (非流式)    │     │  (低延迟)    │     │  (非流式)    │       │
+│  └─────────────┘     └─────────────┘     └─────────────┘       │
+│                                                                 │
+│  • ASR CER 目标: < 20% (优于人类基线 20.45%)                      │
+│  • 端到端延迟: 5-10s (可接受)                                     │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│              第二阶段：流式实时优化                                │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  ┌─────────────┐     ┌─────────────┐     ┌─────────────┐       │
+│  │  ASR        │────▶│  Agent      │────▶│  TTS        │       │
+│  │  Paraformer │     │  LLM        │     │  GPT-SoVITS │       │
+│  │  (流式)     │     │  (流式输出)  │     │  (流式)     │       │
+│  └─────────────┘     └─────────────┘     └─────────────┘       │
+│       ↓                   ↓                   ↓                 │
+│    600ms              逐token             流式合成               │
+│                                                                 │
+│  • 端到端首响应: < 1.5s                                          │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────┐
+│              第三阶段：精度与能力优化                              │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  • ASR CER 目标: < 16.4% (达到 CDSD SOTA)                        │
+│  • 多说话人支持 (会议室/在野场景)                                  │
+│  • Agent RAG 增强                                               │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### 模型选择
+
+| 模型 | 参数量 | 显存占用 | 特点 | 推荐度 |
+|------|--------|----------|------|--------|
+| **Paraformer-large** | 220M | ~8GB | 非自回归，速度快，精度高 | ⭐⭐⭐⭐⭐ |
+| SenseVoice-Small | 330M | ~12GB | 多功能(ASR+情感) | ⭐⭐⭐⭐ |
+| Conformer-12e6d | ~100M | ~6GB | 经典架构，易调优 | ⭐⭐⭐ |
+
+**最终选择**: Paraformer-large
+- 非自回归架构，推理速度快10倍
+- 60000小时中文预训练
+- 完整的微调代码支持
+
+---
+
+## 📁 项目结构
+
+```
 CLEAR-VOX-MODEL/
-│
-├── README.md                      # 本文档
-│
 ├── data/
-│   └── cdsd/
-│       ├── raw/                   # 原始 CDSD 数据（只读）
-│       │   ├── audio/
-│       │   └── text/
-│       │
-│       └── list/                  # 训练清单（脚本生成）
-│           ├── transcripts.tsv
-│           ├── train.jsonl
-│           ├── dev.jsonl
-│           ├── train_wav.scp
-│           ├── train_text.txt
-│           ├── train_utt2spk
-│           ├── dev_wav.scp
-│           ├── dev_text.txt
-│           └── dev_utt2spk
-│
+│   ├── 1h_dataset/           # 处理后的训练数据
+│   │   ├── train.jsonl       # 训练集 (45,327条)
+│   │   ├── val.jsonl         # 验证集 (4,460条)
+│   │   ├── test.jsonl        # 测试集 (6,064条)
+│   │   └── data_statistics.txt
+│   └── list/                 # 数据清单
 ├── scripts/
-│   ├── prepare_cdsd_from_audiotext.py   # CDSD 接入脚本
-│   └── utils/                           # 可选：文本清洗、统计等
-│
+│   ├── prepare_1h_dataset.py # 数据准备脚本
+│   ├── finetune_paraformer.sh # 微调训练脚本
+│   └── inference_test.py     # 推理测试脚本
 ├── exp/
-│   ├── stage1_baseline/          # 阶段一：通用 ASR 基线
-│   ├── stage2_domain_adapt/      # 阶段二：构音障碍适配
-│   └── stage3_asr_ger/           # 阶段三：ASR + GER
-│
-└── tools/
-    ├── infer_asr.py              # 推理脚本（可选）
-    └── eval_cer.py               # CER 评测脚本（可选）
+│   ├── baseline_results.json # 基线测试结果
+│   └── paraformer_finetune_1h/ # 微调模型输出
+├── docs/
+│   ├── FINETUNE_MANUAL_v2.md # 微调手册
+│   └── TECHNICAL_ROADMAP.md  # 技术路线图
+└── funasr/                   # FunASR 源码
+```
+
+---
+
+## 🚀 快速开始
 
-3. 环境与硬件要求
-3.1 硬件建议
-组件	推荐
-GPU	RTX 4090 24GB × 1（Nano 可单卡）
-CPU	≥ 8 核
-内存	≥ 32GB（建议 64GB）
-存储	≥ 200GB
+### 1. 环境配置
 
-FunASR-Nano（~0.8B）支持 单卡 LoRA / 小 batch 全量微调，无需 A100。
+```bash
+# 创建虚拟环境
+conda create -n funasr python=3.10 -y
+conda activate funasr
 
-3.2 软件环境
-conda create -n clearvox python=3.10 -y
-conda activate clearvox
+# 安装依赖
+pip install torch==2.1.0 torchaudio==2.1.0 --index-url https://download.pytorch.org/whl/cu121
+pip install -U funasr modelscope
+pip install "numpy<2"  # 重要：解决兼容性问题
 
-pip install torch torchaudio
-pip install -U funasr modelscope huggingface_hub
+# 安装 ffmpeg
+sudo apt install ffmpeg
+```
 
-4. 数据准备（CDSD）
-4.1 原始数据结构（audio / text 分离）
-data/cdsd/raw/
-  audio/
-    speaker_0001_xxx.wav
-  text/
-    speaker_0001_xxx.txt
+### 2. 验证安装
+
+```python
+from funasr import AutoModel
+model = AutoModel(model="iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch")
+print("Installation OK!")
+```
 
-4.2 生成训练清单（关键一步）
-python scripts/prepare_cdsd_from_audiotext.py \
-  --cdsd_root data/cdsd/raw \
-  --out_dir data/cdsd/list \
-  --dev_ratio 0.05 \
-  --seed 42 \
-  --make_jsonl \
-  --match_mode relpath
+### 3. 数据准备
 
+```bash
+cd /root/CLEAR-VOX-MODEL
+python scripts/prepare_1h_dataset.py
+
+# 检查数据
+cat data/1h_dataset/data_statistics.txt
+```
+
+### 4. 基线测试
+
+```bash
+python scripts/inference_test.py \
+  --model "iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch" \
+  --test data/1h_dataset/test.jsonl \
+  --output exp/baseline_results.json \
+  --max_samples 100
+```
 
-生成的 data/cdsd/list/ 是 FunASR 唯一依赖的数据入口。
+### 5. 开始微调
 
-5. 模型训练的三阶段路线（核心设计）
+```bash
+bash scripts/finetune_paraformer.sh
+```
 
-CLEAR-VOX 采用 逐阶段演进 的训练策略，而不是“一步到位”。
+### 6. 测试微调模型
 
-阶段一：Baseline ASR（通用能力对齐）
+```bash
+python scripts/inference_test.py \
+  --model exp/paraformer_finetune_1h/model.pt.avg_10 \
+  --test data/1h_dataset/test.jsonl \
+  --output exp/finetune_results.json
+```
 
-目标
-验证训练流程 & 数据是否正确，不追求最终指标。
+---
 
-模型
+## 📊 实验结果
 
-FunASR-Nano-2512（不做或少量微调）
+### 数据集统计 (1h 子集)
 
-训练配置重点
+| 划分 | 说话人数 | 语音条数 |
+|------|----------|----------|
+| 训练集 | 35 | 45,327 |
+| 验证集 | 4 | 4,460 |
+| 测试集 | 5 | 6,064 |
+| **总计** | **44** | **55,851** |
 
-batch_type: token
-batch_size: 400
-max_epoch: 5~10
-learning_rate: 2e-4
+### CER 评测结果
 
+| 模型 | CER | 说明 |
+|------|-----|------|
+| Paraformer-large (原始) | **82.50%** | 未适应构音障碍 |
+| Paraformer-large (微调) | 🔜 待测 | 微调后预期 16-22% |
+| CDSD论文最佳 | 16.4% | Hybrid CTC/Attention |
+| 人类评估者 | 20.45% | CDSD论文人类基线 |
 
-输出目录
+### 评测指标说明
 
-exp/stage1_baseline/
+| 指标 | 全称 | 计算方式 | 用途 |
+|------|------|----------|------|
+| **CER** | Character Error Rate | (替换+删除+插入)/总字数 × 100% | 中文ASR主要指标 |
+| WER | Word Error Rate | 按词计算 | 英文ASR |
+| RTF | Real-Time Factor | 处理时间/音频时长 | 速度评估 |
 
+**CER 质量标准**:
+- 1-5%: ⭐⭐⭐⭐⭐ 优秀 (商用级)
+- 5-10%: ⭐⭐⭐⭐ 良好
+- 10-20%: ⭐⭐⭐ 可用
+- 20-50%: ⭐⭐ 较差
+- >50%: ⭐ 很差
 
-你关注的指标
+---
 
-loss 是否正常下降
+## ⚙️ 训练配置
 
-dev CER 是否 < 原始模型 CER
+### 关键参数 (v2.0 校验后)
 
-阶段二：构音障碍领域适配（最关键）
+| 参数 | 值 | 说明 |
+|------|-----|------|
+| batch_size | 6000 tokens | 3090单卡 |
+| learning_rate | 0.0002 | 官方推荐 |
+| max_epoch | 50 | 小数据集可增加 |
+| validate_interval | 2000 | 每2000步验证 |
+| keep_nbest_models | 10 | 节省存储 |
+| avg_nbest_model | 10 | 最佳N个模型平均 |
 
-目标
-让模型真正“听懂”构音障碍语音。
+### 显存不足时
 
-模型
+```bash
+# 降低 batch_size
+++dataset_conf.batch_size=4000
+# 或
+++dataset_conf.batch_size=2000
+```
 
-FunASR-Nano + LoRA（推荐）
+---
 
-或 Nano 全量微调（显存允许时）
+## 📚 参考文献
 
-关键配置调整（非常重要）
+### CDSD 数据集论文
+> **CDSD: Chinese Dysarthria Speech Database**  
+> - 会议: INTERSPEECH 2024  
+> - 规模: 133 小时，44位说话人  
+> - 最佳结果: CER 16.4% (Hybrid CTC/Attention)  
+> - 人类基线: CER 20.45%  
+> - arXiv: https://arxiv.org/abs/2310.15930
 
-项	建议	原因
-batch_size	↓ 200~300	发音差异大，梯度不稳定
-max_epoch	↑ 30~50	需要充分适应
-learning_rate	1e-4 ~ 3e-4	防止灾难性遗忘
-dev split	speaker-level	防止说话人泄漏
+### FunASR 框架
+> - GitHub: https://github.com/modelscope/FunASR  
+> - 文档: https://funasr.readthedocs.io  
+> - ModelScope: https://modelscope.cn
 
-输出目录
+### Paraformer 论文
+> **Paraformer: Fast and Accurate Parallel Transformer for Non-autoregressive End-to-End Speech Recognition**  
+> - arXiv: https://arxiv.org/abs/2206.08317
 
-exp/stage2_domain_adapt/
+---
 
-阶段三：ASR + GER（二阶段纠错）
+## 🤝 贡献指南
 
-目标
-用语言模型修正 ASR 的结构性错误。
+欢迎提交 Issue 和 Pull Request！
 
-结构
+---
 
-audio
-  → ASR（ClearVox-ASR）
-    → N-best hypotheses
-      → GER（文本纠错模型）
-        → final transcript
+## 📄 许可证
 
+本项目采用 **CC BY-NC-SA 4.0** (署名-非商业性使用-相同方式共享) 许可证。
 
-GER 模型建议
+[![CC BY-NC-SA 4.0](https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg)](LICENSE)
 
-Chinese T5 / BART / Qwen-7B（LoRA）
+### 您可以自由地：
+- ✅ **分享** — 在任何媒介以任何形式复制、发行本作品
+- ✅ **演绎** — 修改、转换或以本作品为基础进行创作
 
-输入：ASR 输出
+### 条件：
+- 📝 **署名** — 您必须给出适当的署名
+- 🚫 **非商业性使用** — 您不得将本作品用于商业目的
+- 🔄 **相同方式共享** — 衍生作品必须采用相同的许可证
 
-输出：修正文本
+> ⚠️ **商用说明**：如需商业使用，请联系作者获取授权。
 
-配置关注点
+---
 
-ASR 阶段：输出 N-best
-
-GER 阶段：文本 max_length、beam size
-
-输出目录
-
-exp/stage3_asr_ger/
-
-6. 不同阶段你“主要调什么”
-快速对照表
-阶段	你最常调的参数
-Stage 1	batch_size, epoch
-Stage 2	lr, epoch, speaker split
-Stage 3	N-best size, GER 模型大小
-7. 推理与评测
-
-推理：FunASR AutoModel.generate
-
-评测：CER（Character Error Rate）
-
-建议：按 speaker 统计 CER 分布
-
-8. 命名规范（推荐）
-
-模型：
-
-ClearVox-Nano-ASR
-
-ClearVox-ASR-v2
-
-实验：
-
-stage2_cdsd_lora_lr2e4
-
-论文系统名：
-
-ClearVox: An Accessible ASR System for Chinese Dysarthric Speech
-
-9. 项目状态
-
- 数据接入（CDSD）
-
- FunASR-Nano 微调
-
- ASR + GER 集成
-
- 多模型对比实验
-
- 用户端应用
-
-10. 下一步可以继续做的事
-
-⬜ 自动 <NOISE> 策略对比实验
-
-⬜ FireRedASR vs FunASR 对比
-
-⬜ GER 模型蒸馏
-
-⬜ Web / App 推理接口
+**作者**: CLEAR-VOX Team  
+**最后更新**: 2025-12-23  
+**版本**: v2.0
