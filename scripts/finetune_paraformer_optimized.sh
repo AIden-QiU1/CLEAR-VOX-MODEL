@@ -1,11 +1,17 @@
 #!/bin/bash
-# FunASR Paraformer 构音障碍微调脚本 v2.3 (显存优化版)
-# 策略: 增强 SpecAugment
+# FunASR Paraformer 构音障碍微调脚本 v2.4 (显存优化 + 缓存清理版)
+# 策略: 增强 SpecAugment + PyTorch 内存优化
 # 显存优化: batch_type=example, batch_size=24 (适合 24GB GPU)
 # 作者: CLEAR-VOX Team
-# 日期: 2025-12-23
+# 日期: 2025-12-24
 
 export CUDA_VISIBLE_DEVICES="0"
+
+# ============ 关键：PyTorch 显存优化配置 ============
+# 限制内存碎片，防止 cache 无限增长
+export PYTORCH_ALLOC_CONF="max_split_size_mb:128,expandable_segments:True"
+# 启用 cudnn benchmark 优化
+export CUDNN_BENCHMARK=1
 
 workspace=/root/CLEAR-VOX-MODEL
 model="iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
@@ -16,7 +22,7 @@ output_dir="/root/autodl-tmp/exp/paraformer_finetune_1h_optimized"
 mkdir -p ${output_dir}
 
 echo "=============================================="
-echo "FunASR Paraformer 构音障碍微调 v2.3 (显存优化)"
+echo "FunASR Paraformer 构音障碍微调 v2.4 (显存优化)"
 echo "=============================================="
 echo "训练数据: ${train_data}"
 echo "验证数据: ${val_data}"
@@ -25,10 +31,13 @@ echo "GPU: ${CUDA_VISIBLE_DEVICES}"
 echo ""
 echo "优化策略:"
 echo "  1. 增强 SpecAugment (频率/时间遮蔽)"
+echo "  2. PyTorch 内存碎片优化 (max_split_size_mb=128)"
+echo "  3. 可扩展内存段 (expandable_segments=True)"
 echo ""
 echo "显存优化:"
 echo "  - batch_type: example (按样本数计数)"
-echo "  - batch_size: 24 (适合 24GB GPU)"
+echo "  - batch_size: 24"
+echo "  - max_token_length: 1800 (限制超长音频)"
 echo ""
 echo "模型保存策略:"
 echo "  - 保留效果最好的 5 个模型"
@@ -50,9 +59,10 @@ torchrun --nproc_per_node=1 ${workspace}/funasr/bin/train_ds.py \
     ++dataset_conf.index_ds="IndexDSJsonl" \
     ++dataset_conf.data_split_num=1 \
     ++dataset_conf.batch_sampler="BatchSampler" \
-    ++dataset_conf.batch_size=24 \
+    ++dataset_conf.batch_size=20 \
     ++dataset_conf.sort_size=1024 \
     ++dataset_conf.batch_type="example" \
+    ++dataset_conf.max_token_length=1800 \
     ++dataset_conf.num_workers=2 \
     ++specaug_conf.apply_time_warp=false \
     ++specaug_conf.num_freq_mask=2 \

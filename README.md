@@ -292,3 +292,157 @@ python scripts/inference_test.py \
 **作者**: CLEAR-VOX Team  
 **最后更新**: 2025-12-23  
 **版本**: v2.0
+
+---
+
+## 🔧 训练技巧
+
+### 使用 nohup 后台训练（推荐）
+
+长时间训练建议使用 `nohup` 命令，即使断开 SSH 连接训练也会继续：
+
+```bash
+# 激活环境
+source ~/miniconda3/bin/activate funasr
+cd /root/CLEAR-VOX-MODEL
+
+# 后台启动训练（推荐方式）
+nohup bash scripts/finetune_paraformer_optimized.sh \
+    > /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/train_nohup.log 2>&1 &
+
+# 查看进程 ID
+echo $!
+
+# 实时查看训练日志
+tail -f /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/train_nohup.log
+```
+
+**nohup 训练的优势**：
+| 优势 | 说明 |
+|------|------|
+| 🔌 断网不中断 | SSH 断开/终端关闭，训练继续 |
+| 📋 日志保存 | 输出自动保存到文件 |
+| 🖥️ 释放终端 | 不占用当前终端，可执行其他命令 |
+| ⏰ 长时间训练 | 适合 50 epoch 等长训练 |
+
+### 训练管理命令
+
+```bash
+# 查看训练进程
+ps aux | grep train_ds.py
+
+# 查看 GPU 使用情况
+watch -n 5 nvidia-smi
+
+# 停止训练
+kill <PID>  # PID 从 ps aux 获取
+
+# 查看最新训练日志（最后 50 行）
+tail -50 /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/train_nohup.log
+
+# 查看训练 loss 趋势
+grep "loss_avg_slice" /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/train_nohup.log | tail -20
+```
+
+### 断点续训
+
+训练脚本已配置 `resume=true`，中断后重新执行会自动从最新 checkpoint 继续：
+
+```bash
+# 查看已保存的 checkpoints
+ls -lh /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/model.pt*
+
+# 继续训练（自动从最新 checkpoint 恢复）
+nohup bash scripts/finetune_paraformer_optimized.sh \
+    > /root/autodl-tmp/exp/paraformer_finetune_1h_optimized/train_nohup.log 2>&1 &
+```
+
+
+---
+
+## 📂 项目文档导航
+
+### 核心文档目录
+
+| 文档 | 路径 | 说明 |
+|------|------|------|
+| 📖 **README** | `README.md` | 项目概览与快速开始 |
+| 🔬 **技术调研报告** | [docs/REASEARCH_DYSARTHIC_REPORT.md](docs/REASEARCH_DYSARTHIC_REPORT.md) | 2025年构音障碍ASR研究综述、GitHub开源项目分析 |
+| 🛠️ **微调手册** | [docs/FINETUNE_MANUAL.md](docs/FINETUNE_MANUAL.md) | FunASR/Paraformer 微调详细步骤 |
+| 🗺️ **技术路线图** | [docs/TECHNICAL_ROADMAP.md](docs/TECHNICAL_ROADMAP.md) | 三阶段开发计划 |
+| 📝 **实验设计** | [docs/EXPERIMENT_DESIGN.md](docs/EXPERIMENT_DESIGN.md) | 对照实验方案 |
+
+### 脚本目录
+
+```
+scripts/
+├── prepare_1h_dataset.py          # 数据集准备脚本
+├── finetune_paraformer_optimized.sh # 优化版微调训练脚本 (v2.3)
+├── inference_test.py              # 推理测试脚本
+└── evaluate_cer.py                # CER 评估脚本
+```
+
+| 脚本 | 用途 | 运行示例 |
+|------|------|----------|
+| `finetune_paraformer_optimized.sh` | 模型微调 | `bash scripts/finetune_paraformer_optimized.sh` |
+| `inference_test.py` | 推理测试 | `python scripts/inference_test.py --model MODEL_PATH` |
+
+### 数据集目录
+
+```
+data/
+├── 1h_dataset/                    # CDSD 1h 子集 (处理后)
+│   ├── train.jsonl                # 训练集 45,327 条
+│   ├── val.jsonl                  # 验证集 4,460 条
+│   ├── test.jsonl                 # 测试集 6,064 条
+│   └── data_statistics.txt        # 数据统计
+└── list/                          # 原始数据清单
+    └── text_train                 # 转录文本
+```
+
+### 实验输出目录
+
+```
+exp/                               # 本地实验
+├── baseline_results.json          # 基线测试结果
+└── paraformer_finetune_1h_optimized/ # 微调模型 (软链接)
+
+/root/autodl-tmp/exp/              # 大容量存储 (实际输出)
+└── paraformer_finetune_1h_optimized/
+    ├── model.pt                   # 最新模型
+    ├── model.pt.ep*               # Epoch checkpoints
+    ├── train_nohup.log            # 训练日志
+    └── tb_logs/                   # TensorBoard 日志
+```
+
+### 配置文件
+
+| 文件 | 说明 |
+|------|------|
+| `setup.py` | 包安装配置 |
+| `.gitignore` | Git 忽略规则 |
+| `funasr/version.txt` | FunASR 版本 (1.2.9) |
+
+---
+
+## 📚 推荐阅读顺序
+
+**新用户**:
+1. 📖 `README.md` (本文档) - 了解项目概况
+2. 🔬 [技术调研报告](docs/REASEARCH_DYSARTHIC_REPORT.md) - 了解研究背景
+3. 🛠️ [微调手册](docs/FINETUNE_MANUAL.md) - 动手实践
+
+**研究者**:
+1. 🔬 [技术调研报告](docs/REASEARCH_DYSARTHIC_REPORT.md) - **重点：第10-11节 GitHub 项目**
+2. 📝 [实验设计](docs/EXPERIMENT_DESIGN.md) - 复现实验
+3. 🗺️ [技术路线图](docs/TECHNICAL_ROADMAP.md) - 未来规划
+
+**开发者**:
+1. 🛠️ [微调手册](docs/FINETUNE_MANUAL.md) - 快速上手
+2. `scripts/` 目录 - 直接使用脚本
+3. 🗺️ [技术路线图](docs/TECHNICAL_ROADMAP.md) - 系统架构
+
+---
+
+**最后更新**: 2025-12-24  
+**版本**: v2.1
