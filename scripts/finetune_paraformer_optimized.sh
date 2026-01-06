@@ -1,7 +1,7 @@
 #!/bin/bash
 # FunASR Paraformer 构音障碍微调脚本 v2.4 (显存优化 + 缓存清理版)
 # 策略: 增强 SpecAugment + PyTorch 内存优化
-# 显存优化: batch_type=example, batch_size=24 (适合 24GB GPU)
+# 显存优化: batch_type=example, batch_size=20(适合 24GB GPU)
 # 作者: CLEAR-VOX Team
 # 日期: 2025-12-24
 
@@ -36,7 +36,7 @@ echo "  3. 可扩展内存段 (expandable_segments=True)"
 echo ""
 echo "显存优化:"
 echo "  - batch_type: example (按样本数计数)"
-echo "  - batch_size: 24"
+echo "  - batch_size: 20"
 echo "  - max_token_length: 1800 (限制超长音频)"
 echo ""
 echo "模型保存策略:"
