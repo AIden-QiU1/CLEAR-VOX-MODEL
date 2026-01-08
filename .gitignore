@@ -1,31 +1,96 @@
-.idea
-./__pycache__/
+# Python
+__pycache__/
 */__pycache__/
 */*/__pycache__/
 */*/*/__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.eggs/
+*.egg-info/
+*.egg
+dist/
+build/
+.Python
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
 .DS_Store
+Thumbs.db
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environments
+env/
+venv/
+.env
+*.env
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.bak
+aa.txt
+test_local/
+
+# Model files (large)
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.bin
+!**/version.txt
+
+# Training outputs
+outputs/
+outputs*/
+results/
+checkpoints/
+exp/
+wandb/
+runs/
+tensorboard/
+
+# Data files (too large for git)
+*.wav
+*.mp3
+*.flac
+data/cdsd/*/train.jsonl
+data/cdsd/*/val.jsonl
+data/cdsd/*/test.jsonl
+data/cdsd/*/*.scp
+data/cdsd/*/*.ark
+
+# FunASR specific
 init_model/
 *.tar.gz
-test_local/
-RapidASR
+RapidASR/
 export/*
-*.pyc
-.eggs
-MaaS-lib
-.gitignore
-.egg*
-dist
-build
-funasr.egg-info
-docs/_build
-modelscope
-samples
-.ipynb_checkpoints
-outputs*
-emotion2vec*
-GPT-SoVITS*
-modelscope_models
+MaaS-lib/
+modelscope/
+modelscope_models/
+samples/
+emotion2vec*/
+GPT-SoVITS*/
 examples/aishell/llm_asr_nar/*
-*egg-info
-env/
-exp/
+
+# Docs build
+docs/_build/
+
+# Package
+funasr.egg-info/

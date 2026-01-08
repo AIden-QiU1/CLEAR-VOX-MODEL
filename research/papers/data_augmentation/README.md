@@ -1,228 +1,252 @@
-# 🔊 数据增强 (Data Augmentation)
+# 📈 数据增强 (Data Augmentation)
 
-> **核心问题**: 构音障碍语音数据极度稀缺，如何有效扩充训练数据？
+> 通过TTS合成、语音转换、SpecAugment等技术扩充构音障碍训练数据
 
 ---
 
-## 📋 论文索引
+## 📋 论文列表（按时间倒序）
 
-| # | 论文 | 会议/期刊 | 年份 | 核心贡献 | 重要性 |
-|---|------|-----------|------|----------|--------|
-| 1 | [Synthetic Dysarthric Speech: A Supplement, Not a Substitute](#1-synthetic-dysarthric-speech) | Interspeech | 2025 | 合成vs真实数据的权衡 | ⭐⭐⭐⭐⭐ |
-| 2 | [Training Data Augmentation by TTS](#2-tts-data-augmentation) | Interspeech | 2024 | TTS合成构音障碍语音 | ⭐⭐⭐⭐⭐ |
-| 3 | [Two-stage Data Augmentation](#3-two-stage-data-augmentation) | Interspeech | 2022 | 低成本频谱增强策略 | ⭐⭐⭐⭐ |
-| 4 | [Improving Dysarthria VC System](#4-vc-based-augmentation) | IEEE TNSR | 2023 | GAN语音转换增强 | ⭐⭐⭐⭐ |
-| 5 | [Accurate Synthesis for ASR Augmentation](#5-accurate-synthesis) | Speech Comm | 2024 | 严重度可控TTS | ⭐⭐⭐ |
-| 6 | [Synthesis of New Words](#6-new-words-synthesis) | ICASSP | 2021 | 扩展词汇覆盖 | ⭐⭐⭐ |
+| # | 论文 | 会议/期刊 | 年份 | 重要性 |
+|---|------|----------|------|--------|
+| 1 | Synthetic Dysarthric Speech: Supplement Not Substitute | Interspeech | 2025 | ⭐⭐⭐⭐⭐ |
+| 2 | Data Augmentation for Severity Classification | Interspeech | 2025 | ⭐⭐⭐⭐ |
+| 3 | Training Data Augmentation by TTS | Interspeech | 2024 | ⭐⭐⭐⭐⭐ |
+| 4 | Personalized Adversarial Data Augmentation | TASLP | 2024 | ⭐⭐⭐⭐ |
+| 5 | Enhancing ASR Fine-tuning with Adversarial DA | ICASSP | 2024 | ⭐⭐⭐⭐ |
+| 6 | Towards Automatic Data Augmentation | ICASSP | 2024 | ⭐⭐⭐ |
+| 7 | Accurate Synthesis with Severity Control | Speech Comm | 2024 | ⭐⭐⭐⭐ |
+| 8 | VC-based Augmentation (StarGAN-VC) | IEEE TNSR | 2023 | ⭐⭐⭐ |
+| 9 | Adversarial Data Augmentation Using VAE-GAN | ICASSP | 2023 | ⭐⭐⭐ |
+| 10 | Few-shot DSR with TTS Augmentation | Interspeech | 2023 | ⭐⭐⭐ |
+| 11 | Two-stage Data Augmentation | Interspeech | 2022 | ⭐⭐⭐⭐⭐ |
+| 12 | Synthesis of New Words for Expanded Vocabulary | ICASSP | 2021 | ⭐⭐⭐ |
 
 ---
 
 ## 📖 论文详解
 
-### 1. Synthetic Dysarthric Speech: A Supplement, Not a Substitute
-**Interspeech 2025** | [论文链接](https://www.isca-archive.org/interspeech_2025/li25n_interspeech.pdf)
+### 1. Synthetic Dysarthric Speech: A Supplement, Not a Substitute ⭐⭐⭐⭐⭐
+**Interspeech 2025** | [论文](https://www.isca-archive.org/interspeech_2025/li25n_interspeech.pdf)
 
 #### 核心发现
-> ⚠️ **关键结论**: 合成构音障碍数据（TTDS/VC）存在**过度平滑**和**缺乏类内变异性**问题，会导致模型学习到错误的规律性偏差。
+> 合成数据仅适合作为预训练底座，**绝不可替代真实患者数据**进行最终对齐
 
-#### 实验证据
-- 仅用合成数据训练 → 模型在真实患者语音上CER反而上升
-- 合成数据作为预训练 + 真实数据微调 → 最佳效果
-- 最佳混合比例: 合成:真实 ≈ 3:1（预训练阶段）
+#### 关键洞察
+- 合成构音数据（TTS/VC）存在**过度平滑/缺乏类内变异性**问题
+- 模型会学习到错误的规律性偏差
+- **混合训练**是提升识别率的最佳路径
 
-#### 移植建议
-```
-📌 实践指南:
-1. 不要用合成数据替代真实数据做最终微调
-2. 合成数据适合作为预训练底座
-3. 建议流程: 正常语音预训练 → 合成构音语音适配 → 真实患者数据对齐
-```
-
-#### 代码实现思路
-```python
-# 训练流程伪代码
-# Stage 1: 使用合成数据预热
-model.train(synthetic_dysarthric_data, epochs=5, lr=1e-4)
-
-# Stage 2: 使用真实数据微调对齐
-model.train(real_dysarthric_data, epochs=10, lr=1e-5)
+#### 迁移建议
+```yaml
+训练策略:
+  阶段1_预训练: 合成数据 (TTS/VC生成)
+  阶段2_微调: 真实患者数据
+  比例: 合成:真实 = 3:1 到 1:1
 ```
 
 ---
 
-### 2. Training Data Augmentation by TTS
-**Interspeech 2024** | [论文链接](https://arxiv.org/abs/2406.08568)
+### 2. Data Augmentation using Speech Synthesis for Severity Classification ⭐⭐⭐⭐
+**Interspeech 2025** | [论文](https://www.isca-archive.org/interspeech_2025/kim25w_interspeech.pdf)
 
-#### 核心思想
-利用 F5-TTS/CosyVoice 等现代TTS模型的**低步数推理**能力合成含糊语音，通过**One-Shot音色迁移**解决无数据冷启动问题。
+#### 核心贡献
+- 利用可控TTS合成**不同严重等级**的构音障碍语音
+- 解决真实病理分级数据稀缺问题
+- **逆严重度加权**的数据混合策略
 
 #### 关键技术
-1. **低步数推理**: 减少扩散步数 → 语音更模糊
-2. **音色克隆**: 用患者少量语音（5-10秒）克隆音色
-3. **批量生成**: 对同一文本生成多个变体
-
-#### 移植方案
 ```python
-# 使用 CosyVoice 生成构音障碍风格语音
-from cosyvoice import CosyVoice
-
-tts = CosyVoice(model_dir="CosyVoice-300M")
-
-# 关键参数: 减少扩散步数使语音更模糊
-synthetic_audio = tts.generate(
-    text="打开空调",
-    reference_audio="patient_sample.wav",  # 患者参考音频
-    diffusion_steps=5,  # 低步数 → 更模糊
-)
+# 逆严重度加权策略
+def get_synthesis_ratio(severity):
+    """重度样本需要更多合成数据"""
+    ratios = {
+        'severe': 3.0,    # 合成:真实 = 3:1
+        'moderate': 2.0,
+        'mild': 1.0
+    }
+    return ratios.get(severity, 1.0)
 ```
 
-#### 实验计划
-- [ ] EXP-201: CosyVoice低步数合成效果评估
-- [ ] EXP-202: 合成数据量 vs CER下降曲线
+#### 课程学习策略
+- 训练后期**逐步剔除合成数据**
+- 迫使模型适配真实病理特征
 
 ---
 
-### 3. Two-stage Data Augmentation
-**Interspeech 2022** | [论文链接](https://www.sciencedirect.com/science/article/pii/S0010482525003051)
+### 3. Training Data Augmentation by Text-to-Dysarthric-Speech Synthesis ⭐⭐⭐⭐⭐
+**Interspeech 2024** | [论文](https://arxiv.org/abs/2406.08568)
 
-#### 核心创新
-**低成本模拟病理语音特征**，无需复杂模型：
+#### 核心贡献
+- 建立**构音数据工厂**
+- 利用F5-TTS/CosyVoice低步数推理合成含糊语音
+- **One-Shot音色迁移**解决无数据冷启动
 
-| 增强方法 | 模拟症状 | 实现方式 |
-|----------|----------|----------|
-| **Stutter Mask** | 口吃/卡顿 | 频谱上随机复制几帧 |
-| **Hypernasal Mask** | 鼻音过重 | 高频/低频能量衰减 |
-| **Breathiness Mask** | 漏气/气息 | 注入随机高斯噪声 |
-| **静态降速** | 语速慢 | 时间轴拉伸 |
-
-#### 代码实现
+#### 实现方案
 ```python
-import torch
-import torchaudio
+from f5_tts import F5TTS
 
-def stutter_mask(spectrogram, n_repeats=2, frame_range=(3, 8)):
-    """模拟口吃：随机复制帧"""
-    B, F, T = spectrogram.shape
-    repeat_start = torch.randint(0, T-10, (1,)).item()
-    repeat_len = torch.randint(*frame_range, (1,)).item()
-    
-    segment = spectrogram[:, :, repeat_start:repeat_start+repeat_len]
-    repeated = segment.repeat(1, 1, n_repeats)
-    
-    return torch.cat([
-        spectrogram[:, :, :repeat_start],
-        repeated,
-        spectrogram[:, :, repeat_start:]
-    ], dim=2)
+def synthesize_dysarthric(text, reference_audio):
+    """
+    使用F5-TTS合成构音障碍风格语音
+    reference_audio: 患者参考音频（用于音色克隆）
+    """
+    tts = F5TTS()
+    # 低推理步数保留一定的"含糊"特征
+    audio = tts.generate(
+        text=text,
+        reference=reference_audio,
+        inference_steps=10  # 低步数
+    )
+    return audio
+```
 
-def hypernasal_mask(spectrogram, high_freq_decay=0.7):
-    """模拟鼻音过重：高频衰减"""
-    B, F, T = spectrogram.shape
-    decay = torch.linspace(1, high_freq_decay, F).view(1, F, 1)
-    return spectrogram * decay
+---
+
+### 4. Personalized Adversarial Data Augmentation ⭐⭐⭐⭐
+**TASLP 2024** | CUHK
+
+#### 核心思想
+- 对抗训练生成**个性化增强样本**
+- 针对每个患者的特定错误模式
+
+---
+
+### 5. Enhancing Pre-trained ASR Fine-tuning with Adversarial DA ⭐⭐⭐⭐
+**ICASSP 2024** | CUHK | [论文](https://ieeexplore.ieee.org/document/xxxx)
+
+#### 核心思想
+- 结合对抗训练与预训练模型微调
+- 生成更具挑战性的训练样本
+
+---
+
+### 6. Towards Automatic Data Augmentation for Disordered Speech ⭐⭐⭐
+**ICASSP 2024** | CUHK
+
+#### 核心思想
+- **自动化**选择最优增强策略
+- 无需人工调参
+
+---
+
+### 7. Accurate Synthesis of Dysarthric Speech for ASR Data Augmentation ⭐⭐⭐⭐
+**Speech Communication 2024** | [论文](https://www.sciencedirect.com/science/article/abs/pii/S0167639324000839)
+
+#### 核心贡献
+- 加入**严重程度系数**控制合成语音
+- **停顿插入模型**模拟病理特征
+
+#### 技术架构
+```
+Severity-Controlled FastSpeech 2 (Acoustic Model)
+         ↓
+    Severity Embedding (轻度/中度/重度)
+         ↓
+    HiFi-GAN (Vocoder)
+         ↓
+    构音障碍风格语音
+```
+
+---
+
+### 8. Improving VC for Dysarthria Voice Conversion ⭐⭐⭐
+**IEEE TNSR 2023** | [论文](https://ieeexplore.ieee.org/document/10313325)
+
+#### 核心贡献
+- CycleGAN/Diff-GAN/StarGAN-VC 对比
+- **StarGAN-VC最优**: 无需配对语料
+
+#### 数据策略
+```
+真实 + 合成 混合数据模式
+├── 少量目标患者真实语音
+└── 大量类构音障碍合成语音
+```
+
+---
+
+### 9. Adversarial Data Augmentation Using VAE-GAN ⭐⭐⭐
+**ICASSP 2023** | CUHK
+
+---
+
+### 10. Few-shot Dysarthric Speech Recognition with TTS Data Augmentation ⭐⭐⭐
+**Interspeech 2023** | [论文](https://publications.idiap.ch/attachments/papers/2023/Hermann_INTERSPEECH_2023.pdf)
+
+#### 关键发现
+> 合成语音在已见说话人场景有效，但在unseen speaker的few-shot场景**质量/多样性是瓶颈**
+
+---
+
+### 11. Improved ASR with Two-stage Data Augmentation ⭐⭐⭐⭐⭐
+**Interspeech 2022** | [论文](https://www.sciencedirect.com/science/article/pii/S0010482525003051)
+
+#### 核心贡献（极重要！）
+**定制化SpecAugment掩码**模拟构音障碍特征：
+
+```python
+def stutter_mask(spectrogram, repeat_count=3):
+    """口吃掩码: 在频谱上随机复制几帧（模仿卡顿）"""
+    t = random.randint(0, spectrogram.shape[1] - 5)
+    frame = spectrogram[:, t:t+1]
+    repeated = frame.repeat(1, repeat_count)
+    spectrogram[:, t:t+repeat_count] = repeated
+    return spectrogram
+
+def hypernasal_mask(spectrogram, high_boost=0.3, low_cut=0.2):
+    """鼻音化掩码: 高频增强 + 低频衰减"""
+    spectrogram[:int(spectrogram.shape[0]*0.3), :] *= (1 - low_cut)
+    spectrogram[int(spectrogram.shape[0]*0.7):, :] *= (1 + high_boost)
+    return spectrogram
 
 def breathiness_mask(spectrogram, noise_level=0.1):
-    """模拟漏气：添加高斯噪声"""
+    """气息音掩码: 注入高斯噪声（模仿漏气）"""
     noise = torch.randn_like(spectrogram) * noise_level
     return spectrogram + noise
 ```
 
-#### 实验计划
-- [ ] EXP-203: 各Mask策略单独效果对比
-- [ ] EXP-204: Mask组合策略探索
+#### 核心价值
+- **极低成本**增强模型鲁棒性
+- 不需要外部TTS/VC模型
 
 ---
 
-### 4. VC-based Augmentation (StarGAN-VC/CycleGAN)
-**IEEE TNSR 2023** | [论文链接](https://ieeexplore.ieee.org/document/10313325)
+### 12. Synthesis of New Words for Improved Dysarthric Speech Recognition ⭐⭐⭐
+**ICASSP 2021** | [论文](https://ieeexplore.ieee.org/abstract/document/9414869)
 
-#### 核心思想
-利用**无配对数据**的语音转换模型，将正常语音转换为构音障碍风格。
-
-#### 技术对比
-| 模型 | 优点 | 缺点 | 推荐场景 |
-|------|------|------|----------|
-| **StarGAN-VC** | 多对多转换，无需配对 | 训练不稳定 | 多说话人 |
-| **CycleGAN-VC** | 训练稳定 | 只能一对一 | 单说话人 |
-| **DiffGAN** | 生成质量高 | 计算量大 | 质量优先 |
-
-#### 最佳实践
-```
-📌 "真实 + 合成" 混合数据模式:
-- 少量真实患者语音（保证相关性）
-- 大量VC生成的类构音障碍语音（扩充多样性）
-- 混合比例建议: 真实:合成 = 1:5 ~ 1:10
-```
+#### 核心贡献
+- **已见词/未见词**区分训练
+- 针对性扩展词汇覆盖
 
 ---
 
-### 5. Accurate Synthesis with Severity Control
-**Speech Communication 2024** | [论文链接](https://www.sciencedirect.com/science/article/abs/pii/S0167639324000839)
+## 🔬 实验计划
 
-#### 核心创新
-在TTS合成中加入**严重程度系数**和**停顿插入模型**：
-- Severity-Controlled FastSpeech 2 (声学模型)
-- HiFi-GAN (声码器)
+| 实验ID | 描述 | 优先级 |
+|--------|------|--------|
+| EXP-201 | SpecAugment症状掩码实验 | P0 |
+| EXP-202 | F5-TTS合成增强 | P1 |
+| EXP-203 | CosyVoice合成增强 | P1 |
+| EXP-204 | 混合数据比例实验 | P1 |
+| EXP-205 | 逆严重度加权策略 | P2 |
+| EXP-206 | StarGAN-VC增强 | P2 |
 
-#### 架构
+---
+
+## ✅ 推荐技术路线
+
 ```
-文本 → FastSpeech2 → 严重度嵌入 → 停顿预测 → Mel谱 → HiFi-GAN → 波形
-                        ↓
-                   severity ∈ [0, 1]
-                   0=正常, 1=重度
+第一阶段: SpecAugment症状掩码（零成本）
+    ↓
+第二阶段: F5-TTS合成增强（中等成本）
+    ↓
+第三阶段: 混合训练优化比例
+    ↓
+第四阶段: 课程学习策略
 ```
 
-#### 移植思路
-- 在 F5-TTS 中添加 severity embedding
-- 使用对比学习把不同严重度的 style 拉开
+## ❌ 避免的做法
 
----
-
-### 6. Synthesis of New Words for Vocabulary Expansion
-**ICASSP 2021** | [论文链接](https://ieeexplore.ieee.org/abstract/document/9414869)
-
-#### 关键洞察
-> 构音障碍ASR存在**已见词/未见词**的严重性能差距
-
-#### 解决方案
-1. 识别词汇表中的**低频词**和**未见词**
-2. 使用TTS为这些词生成构音障碍风格语音
-3. 针对性扩充训练数据
-
----
-
-## 🧪 实验计划总览
-
-### EXP-2XX: 数据增强实验系列
-
-| ID | 实验名称 | 假设 | 优先级 |
-|----|----------|------|--------|
-| EXP-201 | CosyVoice低步数合成 | 低扩散步数产生更模糊语音 | P1 |
-| EXP-202 | 合成数据量曲线 | 合成数据存在边际效益递减 | P1 |
-| EXP-203 | 频谱Mask单策略 | Stutter Mask效果 > Hypernasal | P2 |
-| EXP-204 | Mask组合策略 | 组合优于单独使用 | P2 |
-| EXP-205 | 真实:合成混合比 | 最佳比例在1:5附近 | P1 |
-| EXP-206 | 三阶段训练流程 | 正常→合成→真实 优于直接微调 | P0 |
-
----
-
-## 💡 核心结论与建议
-
-### ✅ 推荐做法
-1. **三阶段训练**: 正常语音预训练 → 合成构音语音 → 真实患者数据
-2. **低成本增强优先**: Stutter/Hypernasal Mask 成本低效果好
-3. **混合训练**: 真实+合成数据混合，比例1:5~1:10
-4. **课程学习**: 逆严重度加权，重度样本用更多合成数据
-
-### ❌ 避免的做法
-1. 不要用合成数据完全替代真实数据
-2. 不要过度依赖单一增强策略
-3. 避免合成数据过于"规律"（添加随机性）
-
----
-
-## 📚 相关资源
-
-- [CosyVoice GitHub](https://github.com/FunAudioLLM/CosyVoice)
-- [F5-TTS 论文](https://arxiv.org/abs/2410.06885)
-- [StarGAN-VC 实现](https://github.com/kamepong/StarGAN-VC)
+1. ❌ **不要**只用合成数据训练
+2. ❌ **不要**忽略真实数据的微调阶段
+3. ❌ **不要**对所有严重度使用相同增强比例

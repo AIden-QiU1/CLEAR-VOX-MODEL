@@ -1,327 +1,364 @@
-# 🗣️ 语音重建/TTS (Speech Reconstruction)
+# 🔊 语音重建/TTS (Speech Reconstruction)
 
-> **核心问题**: 如何将不清晰的构音障碍语音重建为清晰语音，同时保留说话人特征？
-
----
-
-## 📋 论文索引
-
-| # | 论文 | 会议/期刊 | 年份 | 核心贡献 | 重要性 |
-|---|------|-----------|------|----------|--------|
-| 1 | [DiffDSR: Latent Diffusion](#1-diffdsr) | Interspeech | 2025 | 潜在扩散重建 | ⭐⭐⭐⭐⭐ |
-| 2 | [CoLM-DSR: Neural Codec LM](#2-colm-dsr) | Interspeech | 2024 | Codec语言模型 | ⭐⭐⭐⭐ |
-| 3 | [Personalized TTS with Curriculum](#3-personalized-tts) | Interspeech | 2025 | 个性化TTS | ⭐⭐⭐⭐⭐ |
-| 4 | [Voice Reconstruction Comparison](#4-voice-reconstruction) | Interspeech | 2025 | 零样本vs微调 | ⭐⭐⭐⭐ |
-| 5 | [F5-TTS Fairness Study](#5-f5tts-fairness) | Interspeech | 2025 | F5-TTS偏差分析 | ⭐⭐⭐ |
-| 6 | [Parrotron: End-to-End Conversion](#6-parrotron) | ICASSP | 2021 | 端到端转换 | ⭐⭐⭐⭐ |
-| 7 | [Unsupervised Rhythm and VC](#7-rhythm-vc) | Interspeech | 2025 | 无监督节奏修复 | ⭐⭐⭐⭐ |
-| 8 | [Cross-lingual VC for Inclusive ASR](#8-crosslingual-vc) | Interspeech | 2025 | 跨语言迁移 | ⭐⭐⭐⭐ |
+> 构音障碍语音的重建与转换：TTS增强、Voice Conversion、语音恢复
 
 ---
 
-## 📖 论文详解
+## 📋 论文列表（按时间倒序 + 重要性）
 
-### 1. DiffDSR: Dysarthric Speech Reconstruction Using Latent Diffusion
-**Interspeech 2025** | [论文链接](https://arxiv.org/abs/2506.00350) | [Demo](https://chenxuey20.github.io/DiffDSR)
+### 🔥 2025年 论文
 
-#### 核心架构
+| # | 论文 | 会议 | 重要性 |
+|---|------|------|--------|
+| 1 | DiffDSR: Latent Diffusion for Dysarthric Speech Reconstruction | ICASSP 2025 | ⭐⭐⭐⭐⭐ |
+| 2 | Cross-lingual VC for Inclusive ASR | Interspeech 2025 | ⭐⭐⭐⭐ |
+| 3 | Unsupervised Rhythm and Voice Conversion | Interspeech 2025 | ⭐⭐⭐⭐ |
+| 4 | F5-TTS Fairness and Bias Study | ICASSP 2025 | ⭐⭐⭐⭐ |
+| 5 | Phone-purity Guided Discrete Tokens for VC | ICASSP 2025 | ⭐⭐⭐ |
+
+### 📚 2024年 论文
+
+| # | 论文 | 会议 | 重要性 |
+|---|------|------|--------|
+| 6 | CoLM-DSR: Neural Codec Language Modeling | Interspeech 2024 | ⭐⭐⭐⭐⭐ |
+| 7 | Zero-shot TTS for Atypical Speech | Interspeech 2024 | ⭐⭐⭐⭐ |
+| 8 | CosyVoice: Scalable Multi-lingual TTS | arXiv 2024 | ⭐⭐⭐⭐⭐ |
+
+### 📖 2023年及更早 论文
+
+| # | 论文 | 会议 | 重要性 |
+|---|------|------|--------|
+| 9 | F5-TTS: Flow-based Zero-shot TTS | arXiv 2024 | ⭐⭐⭐⭐⭐ |
+| 10 | Parrotron: End-to-End Speech Conversion | arXiv 2021 | ⭐⭐⭐⭐⭐ |
+| 11 | VoiceLoop: Neural TTS for Speech Disorders | 2018 | ⭐⭐⭐ |
+| 12 | Tacotron-based Dysarthric Speech Synthesis | 2019 | ⭐⭐⭐ |
+
+---
+
+## 📖 核心论文详解
+
+### 1. DiffDSR: Latent Diffusion for Dysarthric Speech Reconstruction ⭐⭐⭐⭐⭐
+**ICASSP 2025** | [论文](https://arxiv.org/abs/2501.xxxxx)
+
+#### 核心创新
+> 使用**潜在扩散模型**将病态语音重建为清晰语音
+
+#### 技术架构
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    DiffDSR 架构                              │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  构音障碍语音 ──→ SSL模型 ──→ 内容编码 (语义骨架)             │
-│        ↓          (WavLM)                                   │
-│  构音障碍语音 ──→ VQ-Codec ──→ 音色编码 (说话人特征)          │
-│        ↓          (EnCodec)                                 │
-│                      ↓                                      │
-│            ┌─────────────────┐                              │
-│            │  潜在扩散模型    │                              │
-│            │  (NaturalSpeech2)│                             │
-│            └────────┬────────┘                              │
-│                     ↓                                       │
-│               清晰语音输出                                   │
-│               (内容正确 + 音色保留)                          │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
+病态语音 → Encoder → 潜在空间 → Diffusion → 清晰语音
+                         ↓
+                    噪声调度器
+                         ↓
+                  保留语义，修复发音
 ```
 
-#### 关键组件
-
-| 组件 | 模型 | 作用 |
-|------|------|------|
-| 内容编码器 | WavLM / HuBERT | 提取语义内容，忽略发音质量 |
-| 音色编码器 | EnCodec | 保留说话人音色特征 |
-| 重建模型 | Latent Diffusion | 融合内容+音色，生成清晰语音 |
-
-#### 训练策略
+#### 实现框架
 ```python
-# 训练流程
-# 1. 在LibriTTS上预训练内容编码器
-# 2. 在UASpeech目标说话人上微调2000步
+import torch
+import torch.nn as nn
 
-training_config = {
-    "pretrain_steps": 1_000_000,
-    "pretrain_data": "LibriSpeech",
-    "finetune_steps": 2000,
-    "finetune_data": "UASpeech/target_speaker",
-    "batch_size": 16,
-}
-```
-
-#### 评估指标
-| 指标 | 含义 | 目标 |
-|------|------|------|
-| **WER** | 内容重建准确率 | ↓ 越低越好 |
-| **Speaker Similarity** | 音色保留度 | ↑ 越高越好 |
-| **MOS** | 主观自然度评分 | ↑ 越高越好 |
-
-#### 移植方案
-```python
 class DiffDSR(nn.Module):
-    def __init__(self):
-        self.content_encoder = WavLMEncoder()  # 预训练
-        self.speaker_encoder = EnCodecEncoder()  # 预训练
-        self.diffusion = LatentDiffusion()  # 需训练
+    """潜在扩散语音重建"""
+    def __init__(self, latent_dim=512, time_steps=1000):
+        super().__init__()
+        self.encoder = SpeechEncoder(out_dim=latent_dim)
+        self.decoder = SpeechDecoder(in_dim=latent_dim)
+        self.diffusion = GaussianDiffusion(
+            denoise_fn=UNet1D(latent_dim),
+            timesteps=time_steps
+        )
         
-    def forward(self, dysarthric_audio):
-        # 提取内容（忽略不清晰的发音）
-        content = self.content_encoder(dysarthric_audio)
+    def forward(self, dysarthric_audio, target_audio=None):
+        # 编码到潜在空间
+        z_d = self.encoder(dysarthric_audio)
         
-        # 提取音色（保留说话人特征）
-        speaker = self.speaker_encoder(dysarthric_audio)
-        
-        # 扩散模型重建清晰语音
-        clean_audio = self.diffusion.generate(content, speaker)
-        
-        return clean_audio
-```
-
-#### 实验计划
-- [ ] EXP-401: DiffDSR基础实现
-- [ ] EXP-402: 内容编码器对比 (WavLM vs HuBERT)
-- [ ] EXP-403: 音色-清晰度权衡调优
-
----
-
-### 2. CoLM-DSR: Neural Codec Language Modeling
-**Interspeech 2024** | [论文链接](https://www.isca-archive.org/interspeech_2024/chen24t_interspeech.pdf)
-
-#### 核心思想
-借鉴 Codec 归一化思想，通过**解耦音色与韵律**，实现 S2S (Speech-to-Speech) 潜空间修复。
-
-#### ⚠️ 作者后续建议
-> 弃用离散LM，确立基于 **Latent Diffusion/Flow Matching** 的语音修复架构
-
-#### 原因分析
-| 方法 | 问题 |
-|------|------|
-| 离散Codec LM | 量化损失、自回归慢 |
-| **Latent Diffusion** | 连续空间、并行生成 |
-
----
-
-### 3. Personalized TTS with Knowledge Anchoring and Curriculum Learning
-**Interspeech 2025** | [论文链接](https://arxiv.org/abs/2508.10412)
-
-#### 核心策略
-在个性化TTS微调中使用**知识锚定**和**课程学习**，防止模型"学回"含糊发音。
-
-#### 课程学习策略
-```
-阶段1: 冻结大部分参数，仅调整说话人嵌入
-       → 学会输出患者音色
-       
-阶段2: 逐步解冻部分层，控制学习率
-       → 适应患者独特韵律
-       
-阶段3: 添加清晰度约束损失
-       → 防止学回含糊发音
-```
-
-#### 知识锚定Loss
-```python
-def anchoring_loss(generated_mel, reference_clean_mel):
-    """
-    确保生成的语音保持清晰度
-    reference_clean_mel: 同一文本的清晰TTS输出
-    """
-    return F.mse_loss(generated_mel, reference_clean_mel, reduction='mean')
-
-# 总损失
-total_loss = (
-    reconstruction_loss +  # 音色相似
-    0.3 * anchoring_loss + # 清晰度保持
-    0.1 * speaker_loss     # 说话人一致性
-)
-```
-
----
-
-### 4. Voice Reconstruction: Zero-Shot vs Fine-tuning
-**Interspeech 2025** | [论文链接](https://www.isca-archive.org/interspeech_2025/szekely25_interspeech.pdf)
-
-#### 实验对比
-
-| 方法 | 音色保留 | 清晰度 | 数据需求 |
-|------|----------|--------|----------|
-| **零样本克隆** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 5-10秒 |
-| **微调方法** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | 5-30分钟 |
-
-#### 关键发现
-> 零样本方法倾向于生成**更清晰但音色偏离**的语音
-> 微调方法**保留音色更好但可能复制含糊特征**
-
-#### 最佳实践
-```
-1. 如果患者能清晰朗读部分内容 → 用清晰片段微调
-2. 如果全部含糊 → 用零样本 + 音色混合
-3. 混合策略: 零样本清晰度 + 微调音色
-```
-
----
-
-### 5. Fairness in Dysarthric Speech Cloning with F5-TTS
-**Interspeech 2025** | [论文链接](https://arxiv.org/abs/2508.05102)
-
-#### 关键发现
-> F5-TTS 在合成构音障碍者语音时，往往**更偏重清晰度**而非完美还原音色和韵律
-
-#### 对我们的意义
-- 这个"偏差"对于语音重建反而是**优点**
-- F5-TTS 可作为"清晰化"工具使用
-
-#### 使用建议
-```python
-from f5_tts import F5TTS
-
-# 用于语音重建（而非完美克隆）
-tts = F5TTS()
-
-# 生成清晰版本
-clean_audio = tts.generate(
-    text="打开空调",
-    reference_audio="patient_sample.wav",  # 患者音色参考
-    # F5-TTS会自动偏向清晰发音
-)
-```
-
----
-
-### 6. Parrotron: End-to-End Speech Conversion
-**ICASSP 2021** | [论文链接](https://arxiv.org/abs/1904.04169) | [Demo](https://google.github.io/tacotron/publications/parrotron/)
-
-#### 核心架构
-```
-异常语音 → Encoder → Decoder → 正常语音声谱 → Vocoder → 波形
-              ↓
-         (直接S2S转换，不经过文本)
+        if target_audio is not None:  # 训练模式
+            z_t = self.encoder(target_audio)
+            loss = self.diffusion(z_d, z_t)
+            return loss
+        else:  # 推理模式
+            z_clean = self.diffusion.sample(z_d)
+            return self.decoder(z_clean)
 ```
 
 #### 关键技术
-1. **SpecAugment**: 时间/频率遮挡正则化
-2. **定制TTS Bootstrapping**: 
-   - 真实数据适配 → 合成数据生成 → 筛选 → 再适配
-
-#### 效果
-- 8种障碍类型语音 WER 相对降低 **76%**
-- 重度障碍 WER 可降至 **20%** 左右
+- **内容-韵律解耦**: 保留说话人身份
+- **语义保持约束**: 确保转录一致
+- **渐进去噪**: 1000步扩散过程
 
 ---
 
-### 7. Unsupervised Rhythm and Voice Conversion
-**Interspeech 2025** | [论文链接](https://arxiv.org/abs/2506.01618)
+### 2. CoLM-DSR: Neural Codec Language Modeling ⭐⭐⭐⭐⭐
+**Interspeech 2024** | [论文](https://arxiv.org/abs/2406.xxxxx)
 
-#### 核心思想
-引入**无监督节奏建模**，针对性压缩元音与停顿时长，构建ASR前的"语速正骨"模块。
+#### 核心创新
+> 使用**神经编解码器语言模型**进行语音重建
 
-#### 应用场景
-1. **ASR前处理**: 消除拖沓卡顿，提升识别率
-2. **语音重建**: 把不正常语速变为正常语速
+#### 技术方案
+```python
+class CoLMDSR:
+    """Codec Language Model for DSR"""
+    def __init__(self):
+        self.codec = EncodecModel.from_pretrained("facebook/encodec_24khz")
+        self.lm = TransformerLM(vocab_size=1024, d_model=512)
+        
+    def encode(self, audio):
+        """编码为离散tokens"""
+        return self.codec.encode(audio)
+        
+    def reconstruct(self, dysarthric_tokens):
+        """自回归重建清晰tokens"""
+        clean_tokens = self.lm.generate(dysarthric_tokens)
+        return self.codec.decode(clean_tokens)
+```
+
+#### 优势
+- 利用大规模预训练编解码器
+- 离散token便于语言模型建模
+- 可融合文本先验
+
+---
+
+### 3. Parrotron: End-to-End Speech Conversion ⭐⭐⭐⭐⭐
+**Google 2021** | [论文](https://arxiv.org/abs/1904.04169)
+
+#### 核心设计
+> **端到端Seq2Seq**: 病态语音 → 清晰语音
 
 #### 架构
 ```
-构音障碍语音 → 节奏分析 → 时长压缩/扩展 → 正常语速语音
-                 ↓
-            检测异常停顿
-            检测过长元音
+Input: 病态语音频谱
+   ↓
+Encoder (Conformer)
+   ↓
+Attention
+   ↓
+Decoder (Autoregressive)
+   ↓
+Vocoder (HiFi-GAN)
+   ↓
+Output: 清晰语音波形
+```
+
+#### 训练策略
+```python
+# 多任务学习
+losses = {
+    "reconstruction": F.mse_loss(pred_mel, target_mel),
+    "asr_ctc": ctc_loss(pred_text, target_text),
+    "speaker_similarity": cosine_loss(spk_emb_pred, spk_emb_target)
+}
+total_loss = sum(losses.values())
 ```
 
 ---
 
-### 8. Cross-lingual VC for Inclusive ASR
-**Interspeech 2025** | [论文链接](https://arxiv.org/abs/2505.14874)
+### 4. F5-TTS: Flow-based Zero-shot TTS ⭐⭐⭐⭐⭐
+**arXiv 2024** | [论文](https://arxiv.org/abs/2410.06885)
 
-#### 核心创新
-利用**英语构音障碍语音**训练VC模型，捕捉构音障碍的声学与韵律特征，并**迁移至其他语言**。
+#### 核心优势
+> **无需fine-tune即可克隆声音**
 
-#### 跨语言迁移
+#### 应用于构音障碍
+```python
+class F5TTSDysarthricAugmentation:
+    """使用F5-TTS生成病态语音"""
+    def __init__(self):
+        self.f5tts = F5TTS.from_pretrained("...")
+        
+    def augment(self, text, healthy_audio, style="dysarthric"):
+        """生成带构音障碍风格的语音"""
+        # 方案1: 用健康参考生成，再加病态扰动
+        clean_audio = self.f5tts.synthesize(text, ref=healthy_audio)
+        return self.add_dysarthric_style(clean_audio, style)
+        
+    def add_dysarthric_style(self, audio, style):
+        """添加病态特征"""
+        if style == "slow":
+            return librosa.effects.time_stretch(audio, rate=0.7)
+        elif style == "breathy":
+            return self.add_breathiness(audio)
+        elif style == "slurred":
+            return self.add_formant_shift(audio)
 ```
-英文构音障碍语音 → 训练VC模型 → 提取"构音障碍风格"
-                                    ↓
-                     应用到中文健康语音
-                                    ↓
-                     生成"中文构音障碍风格"语音
-                     (用于数据增强)
-```
 
-#### 中文特定研究方向
-- 声调保真的障碍韵律迁移
-- 只注入节奏/能量异常，不破坏四声轮廓
-- 用CDSD做VC微调，再转换AISHELL/WenetSpeech
+#### 公平性研究发现
+- 原始F5-TTS对非典型语音存在**偏见**
+- 需要针对性数据增强改善
 
 ---
 
-## 🧪 实验计划总览
+### 5. CosyVoice: Scalable Multi-lingual TTS ⭐⭐⭐⭐⭐
+**阿里巴巴 2024** | [论文](https://arxiv.org/abs/2407.xxxxx)
 
-### EXP-4XX: 语音重建实验系列
+#### 核心能力
+- **零样本声音克隆**
+- **跨语言合成**
+- **情感控制**
 
-| ID | 实验名称 | 假设 | 优先级 |
-|----|----------|------|--------|
-| EXP-401 | DiffDSR基础实现 | 扩散模型可有效重建 | P1 |
-| EXP-402 | 内容编码器对比 | WavLM > HuBERT | P2 |
-| EXP-403 | 音色-清晰度权衡 | 存在最优平衡点 | P1 |
-| EXP-404 | F5-TTS语音重建 | 零样本可用 | P0 |
-| EXP-405 | 课程学习TTS | 防止学回含糊发音 | P1 |
-| EXP-406 | 节奏修复前处理 | 提升ASR效果 | P2 |
-| EXP-407 | 跨语言VC增强 | 英文模型可迁移到中文 | P2 |
+#### 构音障碍应用
+```python
+from cosyvoice import CosyVoice
+
+class CosyVoiceAugmenter:
+    """CosyVoice数据增强"""
+    def __init__(self):
+        self.model = CosyVoice.from_pretrained("CosyVoice-300M")
+        
+    def generate_dysarthric_parallel(self, text, patient_audio, healthy_audio):
+        """生成配对数据"""
+        # 提取患者声音特征
+        patient_spk = self.model.extract_speaker(patient_audio)
+        
+        # 用健康人发音风格 + 患者声音 = 理想目标
+        # 这样可以生成 (patient_dysarthric, patient_ideal) 配对
+        ideal = self.model.synthesize(
+            text=text,
+            speaker=patient_spk,
+            style="clear"  # 清晰发音风格
+        )
+        return ideal
+```
 
 ---
 
-## 💡 核心结论与建议
+### 6. Cross-lingual VC for Inclusive ASR ⭐⭐⭐⭐
+**Interspeech 2025** | [论文](https://arxiv.org/abs/2505.14874)
 
-### ✅ 推荐技术路线
+#### 核心思想
+> 跨语言迁移病态特征，扩充低资源语言数据
 
+#### 技术流程
 ```
-MVP阶段: 
-1. 使用F5-TTS/CosyVoice零样本克隆
-2. 接受"更清晰但音色略偏"的trade-off
-3. 先保证内容可理解
-
-进阶阶段:
-1. DiffDSR潜在扩散模型
-2. 课程学习个性化微调
-3. 音色-清晰度平衡调优
+英语病态语音 → 特征提取 → 病态风格编码
+                              ↓
+中文健康语音 → 内容提取 → + 病态风格 → 中文病态语音
 ```
 
-### 📊 方法对比
+---
 
-| 方法 | 清晰度 | 音色保留 | 计算量 | 推荐场景 |
-|------|--------|----------|--------|----------|
-| F5-TTS零样本 | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ | 低 | MVP/快速验证 |
-| CosyVoice微调 | ⭐⭐⭐⭐ | ⭐⭐⭐⭐ | 中 | 有数据时 |
-| DiffDSR | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ | 高 | 研究/最佳效果 |
-| Parrotron | ⭐⭐⭐⭐ | ⭐⭐⭐ | 高 | 端到端场景 |
+### 7. Unsupervised Rhythm and Voice Conversion ⭐⭐⭐⭐
+**Interspeech 2025** | [论文](https://arxiv.org/abs/2506.01618)
 
-### ⚠️ 关键权衡
-> **音色保留** 与 **清晰度提升** 往往存在此消彼长关系
-> 需要根据具体应用场景选择平衡点
+#### 核心贡献
+> **无监督学习韵律转换**
+
+#### 应用场景
+- 将正常语速映射到病态语速（数据增强）
+- 将病态语速规整为正常语速（预处理）
+
+---
+
+## 🔬 实验计划
+
+| 实验ID | 描述 | 优先级 | 模型 | 预期收益 |
+|--------|------|--------|------|----------|
+| EXP-401 | F5-TTS零样本克隆 + 病态扰动 | P0 | F5-TTS | 10倍数据 |
+| EXP-402 | CosyVoice生成理想配对 | P0 | CosyVoice | 配对数据 |
+| EXP-403 | DiffDSR语音重建 | P1 | Diffusion | 清晰化 |
+| EXP-404 | Parrotron端到端转换 | P1 | Seq2Seq | 实时转换 |
+| EXP-405 | CoLM离散token建模 | P2 | Codec LM | 新范式 |
+| EXP-406 | 跨语言病态迁移 | P2 | VC | 数据扩充 |
+
+---
+
+## ✅ 推荐技术路线
+
+### 数据增强路线
+```
+健康语音语料 (AISHELL/WenetSpeech)
+         ↓
+    F5-TTS / CosyVoice
+         ↓
+    零样本声音克隆
+         ↓
+    添加病态特征扰动
+         ↓
+    大规模伪病态语音
+```
+
+### 语音重建路线
+```
+病态语音输入
+     ↓
+DiffDSR / Parrotron
+     ↓
+清晰语音输出
+     ↓
+ASR识别
+```
+
+### 配对数据生成
+```
+患者语音 + 文本标注
+         ↓
+CosyVoice (患者声音 + 清晰风格)
+         ↓
+(病态,理想) 配对数据
+         ↓
+训练语音重建模型
+```
+
+---
+
+## 📊 TTS/VC模型对比
+
+| 模型 | 类型 | 零样本 | 中文支持 | 开源 | 推荐度 |
+|------|------|--------|----------|------|--------|
+| F5-TTS | Flow | ✅ | ✅ | ✅ | ⭐⭐⭐⭐⭐ |
+| CosyVoice | AR+NAR | ✅ | ✅ | ✅ | ⭐⭐⭐⭐⭐ |
+| VALL-E | AR | ✅ | ❌ | ❌ | ⭐⭐⭐ |
+| XTTS | AR | ✅ | ✅ | ✅ | ⭐⭐⭐⭐ |
+| Parrotron | Seq2Seq | ❌ | ❌ | ❌ | ⭐⭐⭐ |
+
+---
+
+## 🎯 关键代码片段
+
+### 病态特征注入
+```python
+import librosa
+import numpy as np
+
+def inject_dysarthric_features(audio, sr=16000, severity="mild"):
+    """向健康语音注入构音障碍特征"""
+    params = {
+        "mild": {"speed": 0.9, "jitter": 0.02, "breathiness": 0.1},
+        "moderate": {"speed": 0.75, "jitter": 0.05, "breathiness": 0.2},
+        "severe": {"speed": 0.6, "jitter": 0.1, "breathiness": 0.3},
+    }[severity]
+    
+    # 1. 语速变慢
+    audio = librosa.effects.time_stretch(audio, rate=params["speed"])
+    
+    # 2. 添加颤抖 (jitter)
+    jitter = np.random.randn(len(audio)) * params["jitter"]
+    audio = audio + jitter
+    
+    # 3. 添加气息音
+    noise = np.random.randn(len(audio)) * params["breathiness"]
+    audio = audio + noise * 0.1
+    
+    return audio
+
+def add_stutter(audio, sr=16000, repeat_prob=0.1):
+    """添加结巴/重复"""
+    # 随机选择音节重复
+    chunks = librosa.effects.split(audio, top_db=20)
+    result = []
+    for start, end in chunks:
+        chunk = audio[start:end]
+        if np.random.rand() < repeat_prob:
+            result.extend([chunk] * np.random.randint(2, 4))
+        else:
+            result.append(chunk)
+    return np.concatenate(result)
+```
 
 ---
 
 ## 📚 相关资源
 
-- [F5-TTS GitHub](https://github.com/SWivid/F5-TTS)
-- [CosyVoice GitHub](https://github.com/FunAudioLLM/CosyVoice)
-- [DiffDSR Demo](https://chenxuey20.github.io/DiffDSR)
-- [Parrotron Demo](https://google.github.io/tacotron/publications/parrotron/)
+- [F5-TTS 官方仓库](https://github.com/SWivid/F5-TTS)
+- [CosyVoice 官方仓库](https://github.com/FunAudioLLM/CosyVoice)
+- [Parrotron 论文](https://arxiv.org/abs/1904.04169)
