@@ -25,7 +25,7 @@ class DatasetPreparator:
         self,
         audio_root: str = "/root/autodl-tmp/10h/Audio",
         text_root: str = "/root/autodl-tmp/10h/Text",
-        output_dir: str = "/root/CLEAR-VOX-MODEL/data/10h_dataset",
+        output_dir: str = "/root/CLEAR-VOX-MODEL/data/cdsd/10h",
         train_ratio: float = 0.9,
         val_ratio: float = 0.05,
         test_ratio: float = 0.05,

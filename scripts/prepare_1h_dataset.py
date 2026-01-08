@@ -24,7 +24,7 @@ class DatasetPreparator:
         self,
         audio_root: str = "/root/autodl-tmp/1h/Audio",
         text_root: str = "/root/autodl-tmp/1h/Text",
-        output_dir: str = "/root/CLEAR-VOX-MODEL/data/1h_dataset",
+        output_dir: str = "/root/CLEAR-VOX-MODEL/data/cdsd/1h",
         train_ratio: float = 0.8,
         val_ratio: float = 0.1,
         test_ratio: float = 0.1,
@@ -259,7 +259,7 @@ def main():
     preparator = DatasetPreparator(
         audio_root="/root/autodl-tmp/1h/Audio",
         text_root="/root/autodl-tmp/1h/Text",
-        output_dir="/root/CLEAR-VOX-MODEL/data/1h_dataset",
+        output_dir="/root/CLEAR-VOX-MODEL/data/cdsd/1h",
         train_ratio=0.8,
         val_ratio=0.1,
         test_ratio=0.1,

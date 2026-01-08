@@ -15,8 +15,8 @@ export CUDNN_BENCHMARK=1
 
 workspace=/root/CLEAR-VOX-MODEL
 model="iic/speech_paraformer-large_asr_nat-zh-cn-16k-common-vocab8404-pytorch"
-train_data="${workspace}/data/1h_dataset/train.jsonl"
-val_data="${workspace}/data/1h_dataset/val.jsonl"
+train_data="${workspace}/data/cdsd/1h/train.jsonl"
+val_data="${workspace}/data/cdsd/1h/val.jsonl"
 output_dir="/root/autodl-tmp/exp/paraformer_finetune_1h_optimized"
 
 mkdir -p ${output_dir}
